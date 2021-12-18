@@ -27,7 +27,7 @@ module Logging
       logger.level = @severity
       logger.progname = classname
       logger.datetime_format = '%Y-%m-%d %H:%M:%S'
-      logger.formatter = proc do |severity, datetime, progname, msg|
+      logger.formatter = proc do |_severity, datetime, progname, msg|
         "#{datetime} #{progname}: #{msg}\n"
       end
       logger

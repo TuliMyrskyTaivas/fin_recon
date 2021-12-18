@@ -20,21 +20,21 @@ class Collector
         profile = @yahoo.asset_profile(ticker.ticker)
         stats = @yahoo.key_statistics(ticker.ticker)
         logger.info "#{ticker.ticker}, #{ticker.name}, #{profile.country}, #{profile.industry}"
-        @report.add :ticker => ticker, :profile => profile, :stats => stats
+        @report.add ticker: ticker, profile: profile, stats: stats
       rescue YahooFinance::NotFound
         logger.warn "Firm \"#{firm}\" was not found"
-        @report.not_found :name => firm
+        @report.not_found name: firm
       rescue RestClient::ExceptionWithResponse => e
         logger.warn "Failed to acquire information on firm \"#{firm}\": " + e.message
-        @report.not_found :name => firm
+        @report.not_found name: firm
       end
 
       count += 1
-      if count > 99
-        logger.info "Sleeping for 2 minutes to avoid license restriction on API"
-        sleep 120
-        count = 0
-      end
+      next unless count > 50
+
+      logger.info 'Sleeping for 2 minutes to avoid license restriction on API'
+      sleep 120
+      count = 0
     end
   end
 
