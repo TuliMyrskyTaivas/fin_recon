@@ -84,10 +84,11 @@ class YahooFinance
     stats = parsed['defaultKeyStatistics']
     price = parsed['price']
     has_divs = !stats['lastDividendValue'].empty?
+    eps = stats['forwardEps'].empty? ? '' : stats['forwardEps']['raw']
     KeyStatistics.new(pe_ratio: stats['forwardPE']['fmt'],
                       price: price['regularMarketPrice']['fmt'],
                       market_cap: price['marketCap']['fmt'],
-                      eps: stats['forwardEps']['raw'],
+                      eps: eps,
                       dividend_yield: has_divs ? (last_year_dividend(ticker) / price['regularMarketPrice']['raw'].to_f * 100).to_f.round(2) : '',
                      )
   end
