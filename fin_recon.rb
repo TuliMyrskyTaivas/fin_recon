@@ -35,5 +35,5 @@ Logging.verbose if options[:verbose]
 # Main logic
 # --------------------------------------------------------
 collector = Collector.new
-collector.search options[:firms]
+collector.search_list options[:firms]
 collector.save options[:output]

@@ -24,23 +24,26 @@ class Collector
     end
   end
 
-  def search(filelist) # rubocop:disable Metrics/MethodLength
+  def search(firm) # rubocop:disable Metrics/MethodLength
+    logger.info "looking for \"#{firm}\""
+    begin
+      ticker = get_ticker(firm)
+      profile = @yahoo.asset_profile(ticker.ticker)
+      stats = @yahoo.key_statistics(ticker.ticker)
+      logger.info "#{ticker.ticker}, #{ticker.name}, #{profile.country}, #{profile.industry}"
+      @report.add ticker: ticker, profile: profile, stats: stats
+    rescue YahooFinance::NotFound
+      logger.warn "Not found ticker for #{firm}"
+      @report.not_found name: firm
+    rescue RestClient::ExceptionWithResponse => e
+      logger.warn "Failed to acquire information on firm \"#{firm}\": " + e.message
+      @report.not_found name: firm
+    end
+  end
+
+  def search_list(filelist)
     File.open(filelist).each_line do |line|
-      firm = line.strip
-      logger.info "looking for \"#{firm}\""
-      begin
-        ticker = get_ticker(firm)
-        profile = @yahoo.asset_profile(ticker.ticker)
-        stats = @yahoo.key_statistics(ticker.ticker)
-        logger.info "#{ticker.ticker}, #{ticker.name}, #{profile.country}, #{profile.industry}"
-        @report.add ticker: ticker, profile: profile, stats: stats
-      rescue YahooFinance::NotFound
-        logger.warn "Not found ticker for #{firm}"
-        @report.not_found name: firm
-      rescue RestClient::ExceptionWithResponse => e
-        logger.warn "Failed to acquire information on firm \"#{firm}\": " + e.message
-        @report.not_found name: firm
-      end
+      search(line.strip)
     end
   end
 
