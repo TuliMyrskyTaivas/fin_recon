@@ -6,7 +6,7 @@ require_relative 'logging'
 # ---------------------------------------------------------
 #  Token description
 # ---------------------------------------------------------
-class Ticker
+class Asset
   attr_reader :ticker, :exchange, :quote_type, :name
 
   def initialize(ticker:, exchange:, quote_type:, name:)
@@ -65,7 +65,7 @@ class YahooFinance
     raise NotFound.new(name: name) unless parsed['count'] > 0
 
     quote = parsed['quotes'][0]
-    Ticker.new(ticker: quote['symbol'], exchange: quote['exchange'], quote_type: quote['quoteType'],
+    Asset.new(ticker: quote['symbol'], exchange: quote['exchange'], quote_type: quote['quoteType'],
                name: quote['longname'])
   end
 
@@ -95,8 +95,6 @@ class YahooFinance
 
   def last_year_dividend(ticker)
     logger.debug "Acquiring dividend history for #{ticker}..."
-    #period2 = Time.now.to_i
-    #period1 = period2 - 31_556_952  # 31556952 seconds in one year
     start = 1609459200 # Fri Jan 01 2021 00:00:00 GMT+0000
     stop = 1640980800 # Fri Dec 31 2021 20:00:00 GMT+0000
     response = RestClient.get("https://query1.finance.yahoo.com/v8/finance/chart/#{ticker}",

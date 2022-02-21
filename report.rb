@@ -14,17 +14,16 @@ class Report
                                 'EPS', 'Dividend yield']
   end
 
-  def add(ticker:, profile:, stats:)
-    @work_sheet.row(@work_offset).replace [ ticker.ticker,
-                                            ticker.quote_type,
-                                            ticker.name,
-                                            profile.country,
-                                            profile.industry,
-                                            stats.market_cap,
-                                            stats.price,
-                                            stats.pe_ratio,
-                                            stats.eps,
-                                            stats.dividend_yield ]
+  def add(ticker:, stats:)
+    @work_sheet.row(@work_offset).replace [ticker.rts_code,
+                                           ticker.name,
+                                           ticker.country,
+                                           ticker.industry,
+                                           stats.market_cap,
+                                           stats.price,
+                                           stats.pe_ratio,
+                                           stats.eps,
+                                           stats.dividend_yield]
     @work_offset += 1
   end
 

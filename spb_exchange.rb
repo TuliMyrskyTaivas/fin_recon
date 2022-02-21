@@ -1,21 +1,12 @@
 # --------------------------------------------------------
 # Produce a report about tickers available on SpbExchange
 # --------------------------------------------------------
+require_relative 'tickers_cache'
 require_relative 'collector'
 require_relative 'logging'
 require 'spreadsheet'
 require 'optparse'
 require 'open-uri'
-
-class SpbAsset
-  attr_reader :name, :isin_code, :rts_code
-
-  def initialize(name:, isin_code:, rts_code:)
-    @name = name
-    @isin_code = isin_code
-    @rts_code = rts_code
-  end
-end
 
 class SpbExchange
   include Logging
@@ -24,14 +15,13 @@ class SpbExchange
 
   def initialize
     @assets = []
-    URI.open('https://spbexchange.ru/ru/listing/securities/list/?csv=download') { |data|
-      data.each { |line|
+    URI.open('https://spbexchange.ru/ru/listing/securities/list/?csv=download') do |data|
+      data.each do |line|
         fields = line.split(';')
-        asset = SpbAsset.new(name: fields[2], rts_code: fields[6], isin_code: fields[7])
-        @assets.append(asset)
-      }
-    }
-    logger.info "#{@assets.size} asserts exists on SpbExchange"
+        @assets.append(fields[7]) # search by isin_code
+      end
+    end
+    logger.info "#{@assets.size} assets exists on SpbExchange"
   end
 end
 
@@ -65,7 +55,7 @@ Logging.verbose if options[:verbose]
 # --------------------------------------------------------
 collector = Collector.new
 spb = SpbExchange.new
-spb.assets.each { |asset|
-  collector.search asset.isin_code
-}
+spb.assets.each do |asset|
+  collector.search asset
+end
 collector.save options[:output]
