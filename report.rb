@@ -10,7 +10,7 @@ class Report
     @errors_offset = 1
 
     @work_sheet.row(0).default_format = Spreadsheet::Format.new color: :blue, weight: :bold, size: 10
-    @work_sheet.row(0).replace ['Ticker', 'Type', 'Name', 'Country', 'Industry', 'Market cap', 'Price', 'P/E',
+    @work_sheet.row(0).replace ['Ticker', 'Name', 'Country', 'Industry', 'Market cap', 'Price', 'P/E',
                                 'EPS', 'Dividend yield']
   end
 

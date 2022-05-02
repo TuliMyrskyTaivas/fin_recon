@@ -4,7 +4,6 @@
 require_relative 'tickers_cache'
 require_relative 'collector'
 require_relative 'logging'
-require 'spreadsheet'
 require 'optparse'
 require 'open-uri'
 
@@ -18,10 +17,15 @@ class SpbExchange
     URI.open('https://spbexchange.ru/ru/listing/securities/list/?csv=download') do |data|
       data.each do |line|
         fields = line.split(';')
-        @assets.append(fields[7]) # search by isin_code
+        if fields.size < 7
+          logger.error "Invalid line SPBEXNG response: #{line}"
+          next
+        end
+        # search by isin_code if not empty
+        @assets.append(fields[7]) unless fields[7].empty?
       end
     end
-    logger.info "#{@assets.size} assets exists on SpbExchange"
+    logger.info "#{@assets.size} assets exist on SpbExchange"
   end
 end
 
@@ -54,8 +58,7 @@ Logging.verbose if options[:verbose]
 # Get list of tickers from SPB Exchange
 # --------------------------------------------------------
 collector = Collector.new
-spb = SpbExchange.new
-spb.assets.each do |asset|
+SpbExchange.new.assets.each do |asset|
   collector.search asset
 end
 collector.save options[:output]
