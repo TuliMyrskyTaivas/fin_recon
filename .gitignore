@@ -1,0 +1,11 @@
+# Excel spreadsheets
+*.xlsx
+*.xls
+
+# Backup files
+*.bak
+
+Gemfile.lock
+cache.db
+.idea/*
+data/*
