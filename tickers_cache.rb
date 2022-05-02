@@ -1,6 +1,7 @@
 require_relative 'logging'
 require 'sqlite3'
 
+# Data structure to represent a single ticker
 class Ticker
   attr_reader :name, :isin_code, :rts_code, :country, :industry
 
@@ -13,21 +14,14 @@ class Ticker
   end
 end
 
+# Database backend to store basic information about tickers/ISINs
 class TickersCache
   include Logging
 
   def initialize
     @db = SQLite3::Database.new 'cache.db'
-    @db.execute <<-SQL
-        CREATE TABLE IF NOT EXISTS tickers(
-          id INTEGER PRIMARY KEY,
-          company_name TEXT,
-          isin_code TEXT,
-          rts_code TEXT,
-          country TEXT,
-          industry TEXT
-        );
-    SQL
+    create_tables
+    create_indices
     sqlite_version = @db.get_first_value 'SELECT SQLITE_VERSION()'
     cache_records = @db.get_first_value 'SELECT COUNT(*) FROM tickers'
     logger.info "Using SQLite/#{sqlite_version} as cache: #{@db.filename}"
@@ -56,4 +50,51 @@ class TickersCache
     SQL
     @db.execute query, ticker.name, ticker.isin_code, ticker.rts_code, ticker.country, ticker.industry
   end
+
+  private
+
+  def create_tables
+    @db.execute <<-SQL
+        CREATE TABLE IF NOT EXISTS tickers(
+          id INTEGER PRIMARY KEY,
+          company_name TEXT NOT NULL,
+          isin_code TEXT UNIQUE,
+          rts_code TEXT UNIQUE,
+          country TEXT,
+          industry TEXT
+        );
+    SQL
+    @db.execute <<-SQL
+        CREATE TABLE IF NOT EXISTS stats(
+          id INTEGER PRIMARY KEY,
+          ticker_id INTEGER NOT NULL,
+          market_cap INTEGER,
+          price INTEGER,
+          pe_ratio INTEGER,
+          eps INTEGER,
+          div_yield INTEGER,
+          updated TEXT NOT NULL,
+          FOREIGN KEY (ticker_id) REFERENCES tickers(id)
+        );
+    SQL
+  end
+
+  def create_indices
+    @db.execute <<-SQL
+        CREATE INDEX IF NOT EXISTS isin_idx ON tickers(
+          "isin_code"	ASC
+        );
+    SQL
+    @db.execute <<-SQL
+        CREATE INDEX IF NOT EXISTS rts_idx ON tickers(
+          "rts_code"	ASC
+        );
+    SQL
+    @db.execute <<-SQL
+        CREATE INDEX IF NOT EXISTS company_idx ON tickers(
+          "company_name"	ASC
+        );
+    SQL
+  end
+
 end
