@@ -1,7 +1,6 @@
-require 'RestClient'
-require 'json'
-
 require_relative 'logging'
+require 'rest-client'
+require 'json'
 
 # ---------------------------------------------------------
 #  Token description
@@ -62,11 +61,11 @@ class YahooFinance
                               params: { q: name.to_s, quotesCount: 1, newsCount: 0, listsCount: 0,
                                         enableNavLinks: false })
     parsed = JSON.parse(response.body)
-    raise NotFound.new(name: name) unless parsed['count'] > 0
+    raise NotFound.new(name: name) unless (parsed['count']).positive?
 
     quote = parsed['quotes'][0]
     Asset.new(ticker: quote['symbol'], exchange: quote['exchange'], quote_type: quote['quoteType'],
-               name: quote['longname'])
+              name: quote['longname'])
   end
 
   def asset_profile(ticker)
@@ -80,23 +79,28 @@ class YahooFinance
   def key_statistics(ticker)
     logger.debug "Requesting key statistics for #{ticker}..."
     response = RestClient.get("https://query1.finance.yahoo.com/v10/finance/quoteSummary/#{ticker}?modules=defaultKeyStatistics,price")
-    parsed = JSON.parse(response.body)['quoteSummary']['result'][0]
-    stats = parsed['defaultKeyStatistics']
-    price = parsed['price']
-    has_divs = !stats['lastDividendValue'].empty?
-    eps = stats['forwardEps'].empty? ? '' : stats['forwardEps']['raw']
-    KeyStatistics.new(pe_ratio: stats['forwardPE']['fmt'],
-                      price: price['regularMarketPrice']['fmt'],
-                      market_cap: price['marketCap']['fmt'],
-                      eps: eps,
-                      dividend_yield: has_divs ? (last_year_dividend(ticker) / price['regularMarketPrice']['raw'].to_f * 100).to_f.round(2) : '',
-                     )
+    begin
+      parsed = JSON.parse(response.body)['quoteSummary']['result'][0]
+      stats = parsed['defaultKeyStatistics']
+      price = parsed['price']
+      has_divs = !stats['lastDividendValue'].empty?
+      eps = stats['forwardEps'].empty? ? '' : stats['forwardEps']['raw']
+      KeyStatistics.new(pe_ratio: stats['forwardPE']['fmt'],
+                        price: price['regularMarketPrice']['fmt'],
+                        market_cap: price['marketCap']['fmt'],
+                        eps: eps,
+                        dividend_yield: has_divs ? (last_year_dividend(ticker) / price['regularMarketPrice']['raw'].to_f * 100).to_f.round(2) : '',
+                       )
+    rescue NoMethodError
+      logger.error "Failed to parse Yahoo response: #{response.body}"
+      raise
+    end 
   end
 
   def last_year_dividend(ticker)
     logger.debug "Acquiring dividend history for #{ticker}..."
-    start = 1609459200 # Fri Jan 01 2021 00:00:00 GMT+0000
-    stop = 1640980800 # Fri Dec 31 2021 20:00:00 GMT+0000
+    start = 1_609_459_200 # Fri Jan 01 2021 00:00:00 GMT+0000
+    stop = 1_640_980_800 # Fri Dec 31 2021 20:00:00 GMT+0000
     response = RestClient.get("https://query1.finance.yahoo.com/v8/finance/chart/#{ticker}",
                               params: { symbol: ticker, interval: '1mo', events: 'div', period1: start,
                                         period2: stop })
@@ -104,7 +108,7 @@ class YahooFinance
     return 0 unless parsed.key?('events')
 
     result = 0.0
-    parsed['events']['dividends'].each do | _timestamp, div|
+    parsed['events']['dividends'].each do |_timestamp, div|
       result += div['amount'].to_f
     end
     result
