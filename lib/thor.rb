@@ -1,18 +1,14 @@
-require_relative 'collector'
-require_relative 'logging'
-require 'spreadsheet'
+require_relative 'thor/collector'
 require 'optparse'
 
 # --------------------------------------------------------
-# Process command line options
+# Parse command line
 # --------------------------------------------------------
-options = {
-  output: 'report.xls'
-}
+options = {}
 OptionParser.new do |opts|
-  opts.banner = 'Usage: fin_recon.rb [options]'
-  opts.on('-f', '--filelist FILE', 'search for the firms listed in FILE') do |file|
-    options[:firms] = file
+  opts.banner = 'Usage: thor.rb [options]'
+  opts.on('-e', '--exchange NAME', 'name of the Exchange (MOEX or SPBEX)') do |exchange|
+    options[:exchange] = exchange
   end
   opts.on('-o', '--output FILE', 'save report to FILE (in Excel 97 format') do |file|
     options[:output] = file
@@ -26,14 +22,22 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+# Check the name of Exchange
+if options[:exchange].nil?
+  puts "The name of Exchange is not specified"
+  exit 1
+end
+
+# Set the output filename if not specified
+options[:output] = "#{options[:exchange]}_#{Time.now.strftime('%Y%m%d')}.xls" unless options[:output]
+
 # --------------------------------------------------------
 # Setup logging
 # --------------------------------------------------------
 Logging.verbose if options[:verbose]
 
 # --------------------------------------------------------
-# Main logic
+# Get list of tickers from requested Exchange
 # --------------------------------------------------------
-collector = Collector.new
-collector.search_list options[:firms]
+collector = Thor::Collector.new options[:exchange]
 collector.save options[:output]
