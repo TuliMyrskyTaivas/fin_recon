@@ -7,10 +7,10 @@ require 'optparse'
 options = {}
 OptionParser.new do |opts|
   opts.banner = 'Usage: thor.rb [options]'
-  opts.on('-e', '--exchange NAME', 'name of the Exchange (MOEX or SPBEX)') do |exchange|
+  opts.on('-e', '--exchange NAME', 'enrich the data from specified Exchange (MOEX or SPBEX)') do |exchange|
     options[:exchange] = exchange
   end
-  opts.on('-o', '--output FILE', 'save report to FILE (in Excel 97 format') do |file|
+  opts.on('-o', '--output FILE', 'save report to FILE (in Excel 97 format)') do |file|
     options[:output] = file
   end
   opts.on('-r', '--dry-run', 'just build the report over the existing database') do |r|

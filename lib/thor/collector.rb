@@ -18,7 +18,7 @@ module Thor
 
     def enrich(exchange:)
       create_exchange(exchange_name: exchange).assets.each do |asset|
-        search(asset)
+        search(asset, exchange)
       end
     end
 
@@ -30,7 +30,7 @@ module Thor
     private
 
     def create_exchange(exchange_name:)
-      case(exchange_name)
+      case (exchange_name)
       when 'MOEX'
         MoexExchange.new
       when 'SPBEX'
@@ -58,14 +58,14 @@ module Thor
       end
     end
 
-    def search(firm) # rubocop:disable Metrics/MethodLength
+    def search(firm, exchange) # rubocop:disable Metrics/MethodLength
       logger.info "looking for \"#{firm}\""
       begin
         ticker = @cache.find(firm)
         unless ticker
           yahoo = get_ticker_from_yahoo(firm)
           profile = @yahoo.asset_profile(yahoo.ticker)
-          ticker = Ticker.new(name: yahoo.name, source: @exchange.source, rts_code: yahoo.ticker,
+          ticker = Ticker.new(name: yahoo.name, source: exchange, rts_code: yahoo.ticker,
                               isin_code: isin?(firm) ? firm : nil, country: profile.country, industry: profile.industry)
           logger.info "#{ticker.name}(#{ticker.rts_code}), #{profile.country}, #{profile.industry}"
           @cache.add ticker

@@ -18,16 +18,10 @@ module Thor
 
     def build(report:)
       report.each do |row|
-        @work_sheet.row(@work_offset).replace [row[0],
-                                               row[1],
-                                               row[2],
-                                               row[3],
-                                               row[4],
-                                               row[5],
-                                               row[6],
-                                               row[7],
-                                               row[8],
-                                               row[9]]
+        @work_sheet.row(@work_offset).replace [
+          row[0], row[1], row[2], row[3], row[4],
+          row[5], row[6], row[7], row[8], row[9]
+        ]
         @work_offset += 1
       end
     end
@@ -38,6 +32,7 @@ module Thor
     end
 
     def write(filename)
+      File.delete(filename) if File.exist?(filename)
       @report.write filename
     end
   end
