@@ -52,6 +52,15 @@ module Thor
       @db.execute query, ticker.name, ticker.isin_code, ticker.rts_code, ticker.country, ticker.industry
     end
 
+    def save_stats(ticker:, stats:)
+      logger.debug "Adding statistics on #{ticker.name} to the cache..."
+      query = <<-SQL
+      INSERT OR REPLACE INTO stats (ticker_id, market_cap, price, pe_ratio, eps, div_yield, updated)
+      VALUES ((SELECT id FROM tickers where rts_code = ?), ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+      SQL
+      @db.execute query, ticker.rts_code, stats.market_cap, stats.price, stats.pe_ratio, stats.eps, stats.dividend_yield
+    end
+
     private
 
     def create_tables
@@ -68,7 +77,7 @@ module Thor
       @db.execute <<-SQL
         CREATE TABLE IF NOT EXISTS stats(
           id INTEGER PRIMARY KEY,
-          ticker_id INTEGER NOT NULL,
+          ticker_id INTEGER NOT NULL UNIQUE,
           market_cap INTEGER,
           price INTEGER,
           pe_ratio INTEGER,

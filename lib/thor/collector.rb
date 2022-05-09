@@ -66,6 +66,7 @@ module Thor
         stats = @yahoo.key_statistics(ticker.rts_code)
 
         @report.add ticker: ticker, stats: stats
+        @cache.save_stats ticker: ticker, stats: stats
       rescue YahooFinance::NotFound
         logger.warn "Not found ticker for #{firm}"
         @report.not_found name: firm

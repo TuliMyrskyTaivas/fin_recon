@@ -24,7 +24,7 @@ end.parse!
 
 # Check the name of Exchange
 if options[:exchange].nil?
-  puts "The name of Exchange is not specified"
+  puts 'The name of Exchange is not specified'
   exit 1
 end
 
