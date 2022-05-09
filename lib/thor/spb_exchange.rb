@@ -5,15 +5,16 @@ module Thor
   class SpbExchange
     include Logging
 
-    attr_reader :assets
+    attr_reader :assets, :source
 
     def initialize
       @assets = []
+      @source = 'SpbEx'
       URI.open('https://spbexchange.ru/ru/listing/securities/list/?csv=download') do |data|
         data.each do |line|
           fields = line.split(';')
           if fields.size < 7
-            logger.error "Invalid line SPBEXNG response: #{line}"
+            logger.error "Invalid line in SPBEX response: #{line}"
             next
           end
           # search by isin_code if not empty

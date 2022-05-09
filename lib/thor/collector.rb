@@ -10,28 +10,35 @@ module Thor
   class Collector
     include Thor::Logging
 
-    def initialize(exchange)
+    def initialize
       @cache = TickersCache.new
       @yahoo = YahooFinance.new
       @report = Report.new
-      case(exchange)
-      when 'MOEX'
-        @exchange = MoexExchange.new
-      when 'SPBEX'
-        @exchange = SpbExchange.new
-      else
-        raise "Invalid name of the Exchange '#{exchange}', valid values are MOEX and SPBEX"
+    end
+
+    def enrich(exchange:)
+      create_exchange(exchange_name: exchange).assets.each do |asset|
+        search(asset)
       end
     end
 
     def save(filename)
-      @exchange.assets.each do |asset|
-        search(asset)
-      end
+      @report.build(report: @cache.get_report)
       @report.write filename
     end
 
     private
+
+    def create_exchange(exchange_name:)
+      case(exchange_name)
+      when 'MOEX'
+        MoexExchange.new
+      when 'SPBEX'
+        SpbExchange.new
+      else
+        raise "Invalid name of the Exchange '#{exchange_name}', valid values are MOEX and SPBEX"
+      end
+    end
 
     def isin?(data)
       data.match?('[A-Z]{2}[0-9A-Z]{10}')
@@ -58,15 +65,12 @@ module Thor
         unless ticker
           yahoo = get_ticker_from_yahoo(firm)
           profile = @yahoo.asset_profile(yahoo.ticker)
-          ticker = Ticker.new(name: yahoo.name, rts_code: yahoo.ticker, isin_code: isin?(firm) ? firm : nil,
-                              country: profile.country, industry: profile.industry)
+          ticker = Ticker.new(name: yahoo.name, source: @exchange.source, rts_code: yahoo.ticker,
+                              isin_code: isin?(firm) ? firm : nil, country: profile.country, industry: profile.industry)
           logger.info "#{ticker.name}(#{ticker.rts_code}), #{profile.country}, #{profile.industry}"
           @cache.add ticker
         end
-        stats = @yahoo.key_statistics(ticker.rts_code)
-
-        @report.add ticker: ticker, stats: stats
-        @cache.save_stats ticker: ticker, stats: stats
+        @cache.save_stats ticker: ticker, stats: @yahoo.key_statistics(ticker.rts_code)
       rescue YahooFinance::NotFound
         logger.warn "Not found ticker for #{firm}"
         @report.not_found name: firm

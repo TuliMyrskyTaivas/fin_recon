@@ -6,10 +6,11 @@ module Thor
   class MoexExchange
     include Logging
 
-    attr_reader :assets
+    attr_reader :assets, :source
 
     def initialize
       @assets = []
+      @source = 'MOEX'
       response = RestClient.get('https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json?iss.meta=off&securities.columns=ISIN')
       JSON.parse(response.body)['securities']['data'].each do |asset|
         assets.append(asset[0])

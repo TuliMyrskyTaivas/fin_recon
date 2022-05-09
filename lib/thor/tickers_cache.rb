@@ -4,10 +4,11 @@ require 'sqlite3'
 module Thor
   # Data structure to represent a single ticker
   class Ticker
-    attr_reader :name, :isin_code, :rts_code, :country, :industry
+    attr_reader :name, :source, :isin_code, :rts_code, :country, :industry
 
-    def initialize(name:, isin_code:, rts_code:, country:, industry:)
+    def initialize(name:, source:, isin_code:, rts_code:, country:, industry:)
       @name = name
+      @source = source
       @isin_code = isin_code
       @rts_code = rts_code
       @country = country
@@ -38,8 +39,8 @@ module Thor
                                  data, data, data
       return nil unless result
 
-      ticker = Ticker.new(name: result[1], isin_code: result[2], rts_code: result[3], country: result[4],
-                          industry: result[5])
+      ticker = Ticker.new(name: result[1], source: result[2], isin_code: result[3], rts_code: result[4],
+                          country: result[5], industry: result[6])
       logger.debug "'#{data}' found in the cache: RTS:#{ticker.rts_code}, ISIN:#{ticker.isin_code}"
       ticker
     end
@@ -47,9 +48,9 @@ module Thor
     def add(ticker)
       logger.debug "Adding #{ticker.name} (#{ticker.rts_code}) to the cache..."
       query = <<-SQL
-      INSERT INTO tickers (company_name, isin_code, rts_code, country, industry) VALUES (?, ?, ?, ?, ?);
+      INSERT INTO tickers (company_name, source, isin_code, rts_code, country, industry) VALUES (?, ?, ?, ?, ?, ?);
       SQL
-      @db.execute query, ticker.name, ticker.isin_code, ticker.rts_code, ticker.country, ticker.industry
+      @db.execute query, ticker.name, ticker.source, ticker.isin_code, ticker.rts_code, ticker.country, ticker.industry
     end
 
     def save_stats(ticker:, stats:)
@@ -61,6 +62,15 @@ module Thor
       @db.execute query, ticker.rts_code, stats.market_cap, stats.price, stats.pe_ratio, stats.eps, stats.dividend_yield
     end
 
+    def get_report
+      query = <<-SQL
+      SELECT rts_code, source, company_name, country, industry, market_cap, price, pe_ratio, eps, div_yield
+      FROM tickers INNER JOIN stats on stats.ticker_id = tickers.id
+      ORDER BY country ASC, industry ASC, div_yield DESC;
+      SQL
+      @db.execute query
+    end
+
     private
 
     def create_tables
@@ -68,6 +78,7 @@ module Thor
         CREATE TABLE IF NOT EXISTS tickers(
           id INTEGER PRIMARY KEY,
           company_name TEXT NOT NULL,
+          source TEXT NOT NULL,
           isin_code TEXT UNIQUE,
           rts_code TEXT UNIQUE,
           country TEXT,
