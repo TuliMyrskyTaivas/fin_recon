@@ -1,7 +1,7 @@
-require 'optparse'
 require 'open-uri'
 
 module Thor
+  # Get list of equities from SpbExchange
   class SpbExchange
     include Logging
 

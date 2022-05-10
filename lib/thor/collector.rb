@@ -3,6 +3,7 @@ require_relative 'report'
 require_relative 'tickers_cache'
 require_relative 'yahoo_finance'
 require_relative 'moex_exchange'
+require_relative 'hkex_exchange'
 require_relative 'spb_exchange'
 
 module Thor
@@ -30,11 +31,13 @@ module Thor
     private
 
     def create_exchange(exchange_name:)
-      case (exchange_name)
+      case exchange_name
       when 'MOEX'
         MoexExchange.new
       when 'SPBEX'
         SpbExchange.new
+      when 'HKEX'
+        HkexExchange.new
       else
         raise "Invalid name of the Exchange '#{exchange_name}', valid values are MOEX and SPBEX"
       end

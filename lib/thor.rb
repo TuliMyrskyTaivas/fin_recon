@@ -7,7 +7,7 @@ require 'optparse'
 options = {}
 OptionParser.new do |opts|
   opts.banner = 'Usage: thor.rb [options]'
-  opts.on('-e', '--exchange NAME', 'enrich the data from specified Exchange (MOEX or SPBEX)') do |exchange|
+  opts.on('-e', '--exchange NAME', 'enrich the data from specified Exchange (MOEX,SPBEX,HKEX)') do |exchange|
     options[:exchange] = exchange
   end
   opts.on('-o', '--output FILE', 'save report to FILE (in Excel 97 format)') do |file|
@@ -31,7 +31,7 @@ options[:output] = "thor_report_#{Time.now.strftime('%Y%m%d')}.xls" unless optio
 # --------------------------------------------------------
 # Setup logging
 # --------------------------------------------------------
-Logging.verbose if options[:verbose]
+Thor::Logging.verbose if options[:verbose]
 
 # --------------------------------------------------------
 # Get list of tickers from requested Exchange

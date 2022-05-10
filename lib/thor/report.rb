@@ -1,9 +1,10 @@
-require_relative 'logging'
 require 'spreadsheet'
 
 module Thor
   # Produce the report on the specified instruments
   class Report
+    include Thor::Logging
+
     def initialize
       @report = Spreadsheet::Workbook.new
       @work_sheet = @report.create_worksheet name: 'Tickers'
@@ -32,6 +33,7 @@ module Thor
     end
 
     def write(filename)
+      logger.info "Saving #{@work_offset} lines of report to #{filename}"
       File.delete(filename) if File.exist?(filename)
       @report.write filename
     end
