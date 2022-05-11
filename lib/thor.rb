@@ -29,7 +29,7 @@ OptionParser.new do |opts|
 end.parse!
 
 # Set the output filename if not specified
-options[:output] = "thor_report_#{Time.now.strftime('%Y%m%d')}.xls" unless options[:output]
+options[:output] = "thor_report_#{Time.now.strftime('%Y%m%d')}.xlsx" unless options[:output]
 
 # --------------------------------------------------------
 # Setup logging

@@ -1,4 +1,4 @@
-require 'spreadsheet'
+require 'caxlsx'
 
 module Thor
   # Produce the report on the specified instruments
@@ -6,36 +6,39 @@ module Thor
     include Thor::Logging
 
     def initialize
-      @report = Spreadsheet::Workbook.new
-      @work_sheet = @report.create_worksheet name: 'Tickers'
-      @errors_sheet = @report.create_worksheet name: 'Not found'
-      @work_offset = 1
-      @errors_offset = 1
+      @report = Axlsx::Package.new
+      # Create sheets
+      @work_sheet = @report.workbook.add_worksheet name: 'Tickers'
+      @errors_sheet = @report.workbook.add_worksheet name: 'Not found'
+      # Create styles
+      @report.workbook.styles do |s|
+        @header_style = s.add_style bg_color: '0000FF', fg_color: 'FF', sz: 10,
+                                    alignment: { horizontal: :center }
+      end
 
-      @work_sheet.row(0).default_format = Spreadsheet::Format.new color: :blue, weight: :bold, size: 10
-      @work_sheet.row(0).replace ['Ticker', 'Exchange', 'Name', 'Country', 'Industry', 'Market cap', 'Price', 'P/E',
-                                  'EPS', 'Dividend yield']
+
+      @work_sheet.add_row ['Ticker', 'Exchange', 'Name', 'Country', 'Industry', 'Market cap', 'Price', 'P/E',
+                           'EPS', 'Dividend yield'], style: @header_style
     end
 
     def build(report:)
       report.each do |row|
-        @work_sheet.row(@work_offset).replace [
+        @work_sheet.add_row [
           row[0], row[1], row[2], row[3], row[4],
           row[5], row[6], row[7], row[8], row[9]
         ]
-        @work_offset += 1
       end
+      @work_sheet.column_widths 10, 8, nil, 20, nil, 10, 10, 10, 10
     end
 
     def not_found(name:)
-      @errors_sheet.row(@errors_offset).replace [name]
-      @errors_offset += 1
+      @errors_sheet.add_row [name]
     end
 
     def write(filename)
-      logger.info "Saving #{@work_offset} lines of report to #{filename}"
+      logger.info "Saving report to #{filename}"
       File.delete(filename) if File.exist?(filename)
-      @report.write filename
+      @report.serialize filename
     end
   end
 end
