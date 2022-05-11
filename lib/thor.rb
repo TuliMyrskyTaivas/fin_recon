@@ -13,6 +13,9 @@ OptionParser.new do |opts|
   opts.on('-o', '--output FILE', 'save report to FILE (in Excel 97 format)') do |file|
     options[:output] = file
   end
+  opts.on('-n', '--new-only', 'request information on previously unknown tickers/firms only') do |only_new|
+    options[:only_new] = only_new
+  end
   opts.on('-r', '--dry-run', 'just build the report over the existing database') do |r|
     options[:report] = r
   end
@@ -37,5 +40,5 @@ Thor::Logging.verbose if options[:verbose]
 # Get list of tickers from requested Exchange
 # --------------------------------------------------------
 collector = Thor::Collector.new
-collector.enrich(exchange: options[:exchange]) unless options[:report]
+collector.enrich(exchange: options[:exchange], only_new: options[:only_new]) unless options[:report]
 collector.save options[:output]
