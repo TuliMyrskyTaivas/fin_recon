@@ -10,7 +10,8 @@ module Thor
     def initialize
       @assets = []
       @source = 'SpbEx'
-      URI.open('https://spbexchange.ru/ru/listing/securities/list/?csv=download') do |data|
+      url = 'https://spbexchange.ru/ru/listing/securities/list/?csv=download'
+      URI.open(url, 'User-Agent' => 'curl/7.76.0') do |data|
         data.each do |line|
           fields = line.split(';')
           if fields.size < 7
