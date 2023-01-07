@@ -6,7 +6,7 @@ module Thor
     include Thor::Logging
 
     def initialize
-      @report = Axlsx::Package.new
+      @report = Axlsx::Package.new author: 'Thor: financial reconnaissance tool'
       # Create sheets
       @work_sheet = @report.workbook.add_worksheet name: 'Tickers'
       @errors_sheet = @report.workbook.add_worksheet name: 'Not found'
